@@ -44,19 +44,35 @@ generateDot :: List_Triplos -> String
 generateDot lt =
   "digraph " ++ ontoname ++ " {\n" ++
   generateNodes lc ++
+  generateIndividualNodes li ++
   generateEdges lt ++
   "}"
   where
     generateNodes [] = ""
-    generateNodes ((name, _) : xs) =
+    generateNodes ((name, attrs) : xs) =
       "\"" ++ name ++ "\" [shape=ellipse, style=filled, color=turquoise4];\n" ++
-      "\"" ++ name ++ "\" [shape=rectangle, color=turquoise4];\n" ++
+      generateAttributeNodes name attrs ++
       generateNodes xs
+    
+    generateAttributeNodes _ [] = ""
+    generateAttributeNodes conceptName ((attrName, _) : rest) =
+      "\"" ++ attrName ++ "\" [shape=rectangle, color=turquoise4];\n" ++
+      "\"" ++ conceptName ++ "\"->\"" ++ attrName ++ "\" [label=\"properties\", style=dotted, color=red];\n" ++
+      generateAttributeNodes conceptName rest
+    
+    generateIndividualNodes [] = ""
+    generateIndividualNodes (indiv : xs) =
+      "\"" ++ indiv ++ "\" [shape=rectangle, style=filled, color=goldenrod];\n" ++
+      generateEdgesForIndividual indiv ++
+      generateIndividualNodes xs
+    
+    generateEdgesForIndividual indiv =
+      let indivTriplos = filter (\(src, _, dst, _) -> src == indiv || dst == indiv) lt
+      in generateEdges indivTriplos
     
     generateEdges [] = ""
     generateEdges ((src, rel, dst, _) : xs) =
-      showNode src ++ "->" ++ showNode dst ++ " [label=" ++ show rel ++ ", style=dotted, color=red];\n" ++
-      showNode src ++ "->" ++ showNode ("name='" ++ dst ++ "'") ++ " [label=\"properties\", style=dotted, color=red];\n" ++
+      showNode src ++ "->" ++ showNode dst ++ " [label=" ++ show rel ++ ", style=dashed];\n" ++
       generateEdges xs
       where
         showNode name = "\"" ++ name ++ "\""
