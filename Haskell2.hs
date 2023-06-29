@@ -35,31 +35,28 @@ lt = [("pl", "iof", "traveler", [("name", "Paulo")]),
       ("ine", "lives", "pt", [])]
 
 countOneOf :: List_Triplos -> Int
-countOneOf [] = 0
-countOneOf ((_, rel, _, _) : xs)
-  | rel == "iof" = 1 + countOneOf xs
-  | otherwise = countOneOf xs
+countOneOf = length . filter (\(_, rel, _, _) -> rel == "iof")
 
 countAllAndMoreOf :: List_Triplos -> Int
-countAllAndMoreOf [] = 0
-countAllAndMoreOf ((_, rel, _, _) : xs)
-  | rel == "iof" || rel == "lives" = 1 + countAllAndMoreOf xs
-  | otherwise = countAllAndMoreOf xs
+countAllAndMoreOf = length . filter (\(_, rel, _, _) -> rel == "iof" || rel == "lives")
 
 generateDot :: List_Triplos -> String
-generateDot [] = ""
-generateDot ((src, rel, dst, _) : xs) =
-  show src ++ "->" ++ show dst ++ " [arrowhead=dot, label=" ++ opLabel rel ++ "]" ++ "\n" ++ generateDot xs
+generateDot = unlines . (["digraph " ++ ontoname ++ " {"] ++) . (++ ["}"]) . map generateEdge
   where
-    opLabel "iof" = "properties"
-    opLabel "lives" = "more-of"
-    opLabel _ = "unknown"
+    generateEdge (src, rel, dst, _) =
+      showNode src ++ " [shape=rectangle, style=filled, color=goldenrod];" ++
+      showNode dst ++ " [shape=rectangle, style=filled, color=goldenrod];" ++
+      show src ++ "->" ++ show dst ++ " [label=" ++ show rel ++ ", style=" ++ opStyle rel ++ "];"
+    showNode name = "\"" ++ name ++ "\""
+    opStyle "iof" = "dashed"
+    opStyle "lives" = "dashed"
+    opStyle _ = "dotted"
 
 main :: IO ()
 main = do
-  putStrLn "Count of OneOf: "
+  putStrLn "Count of OneOf:"
   print (countOneOf lt)
-  putStrLn "Count of All and MoreOf: "
+  putStrLn "Count of All and MoreOf:"
   print (countAllAndMoreOf lt)
-  putStrLn "Dot code: "
+  putStrLn "Dot code:"
   putStrLn (generateDot lt)
