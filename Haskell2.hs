@@ -22,15 +22,15 @@ li :: List_Indiv
 li = ["pl", "ine", "pt", "lx"]
 
 lr :: List_Relations
-lr = ["alreadyvisited", "lives"]
+lr = ["alreadyVisited", "lives"]
 
 lt :: List_Triplos
 lt = [("pl", "iof", "traveler", [("name", "Paulo")]),
       ("ine", "iof", "traveler", [("name", "Ines")]),
       ("pt", "iof", "city", [("name", "Porto")]),
       ("lx", "iof", "city", [("name", "Lisboa")]),
-      ("pl", "alreadyvisited", "pt", []),
-      ("ine", "alreadyvisited", "lx", []),
+      ("pl", "alreadyVisited", "pt", []),
+      ("ine", "alreadyVisited", "lx", []),
       ("pl", "lives", "lx", []),
       ("ine", "lives", "pt", [])]
 
@@ -41,16 +41,25 @@ countAllAndMoreOf :: List_Triplos -> Int
 countAllAndMoreOf = length . filter (\(_, rel, _, _) -> rel == "iof" || rel == "lives")
 
 generateDot :: List_Triplos -> String
-generateDot = unlines . (["digraph " ++ ontoname ++ " {"] ++) . (++ ["}"]) . map generateEdge
+generateDot lt =
+  "digraph " ++ ontoname ++ " {\n" ++
+  generateNodes lc ++
+  generateEdges lt ++
+  "}"
   where
-    generateEdge (src, rel, dst, _) =
-      showNode src ++ " [shape=rectangle, style=filled, color=goldenrod];" ++
-      showNode dst ++ " [shape=rectangle, style=filled, color=goldenrod];" ++
-      show src ++ "->" ++ show dst ++ " [label=" ++ show rel ++ ", style=" ++ opStyle rel ++ "];"
-    showNode name = "\"" ++ name ++ "\""
-    opStyle "iof" = "dashed"
-    opStyle "lives" = "dashed"
-    opStyle _ = "dotted"
+    generateNodes [] = ""
+    generateNodes ((name, _) : xs) =
+      "\"" ++ name ++ "\" [shape=ellipse, style=filled, color=turquoise4];\n" ++
+      "\"" ++ name ++ "\" [shape=rectangle, color=turquoise4];\n" ++
+      generateNodes xs
+    
+    generateEdges [] = ""
+    generateEdges ((src, rel, dst, _) : xs) =
+      showNode src ++ "->" ++ showNode dst ++ " [label=" ++ show rel ++ ", style=dotted, color=red];\n" ++
+      showNode src ++ "->" ++ showNode ("name='" ++ dst ++ "'") ++ " [label=\"properties\", style=dotted, color=red];\n" ++
+      generateEdges xs
+      where
+        showNode name = "\"" ++ name ++ "\""
 
 main :: IO ()
 main = do
